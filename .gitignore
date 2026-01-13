@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Environment / secrets
+.env
+
+# Editor junk
+.vscode/
+
+# Data / generated files
+data/
+*.csv
+*.json
+*.xml
+*.7z
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# stack exchange dump
+/meta.stackexchange.com
