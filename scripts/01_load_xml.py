@@ -1,4 +1,5 @@
 import argparse
+import datetime as dt
 import xml.etree.ElementTree as ET
 
 import psycopg
@@ -95,6 +96,7 @@ def load_posts(conn, path, limit, batch_size):
             conn.commit()
             total += len(rows)
             print(f"posts: {total}")
+    return total
 
 
 def load_users(conn, path, limit, batch_size):
@@ -142,6 +144,7 @@ def load_users(conn, path, limit, batch_size):
             conn.commit()
             total += len(rows)
             print(f"users: {total}")
+    return total
 
 
 def load_comments(conn, path, limit, batch_size):
@@ -180,6 +183,19 @@ def load_comments(conn, path, limit, batch_size):
             conn.commit()
             total += len(rows)
             print(f"comments: {total}")
+    return total
+
+
+def record_load_metrics(conn, started_at, finished_at, duration_ms, posts, users, comments):
+    sql = """
+        INSERT INTO load_metrics (
+            started_at, finished_at, duration_ms, posts_loaded, users_loaded, comments_loaded
+        )
+        VALUES (%s, %s, %s, %s, %s, %s)
+    """
+    with conn.cursor() as cur:
+        cur.execute(sql, (started_at, finished_at, duration_ms, posts, users, comments))
+    conn.commit()
 
 
 def main():
@@ -196,12 +212,29 @@ def main():
     print("Connecting to DB...")
     with psycopg.connect(args.dsn, connect_timeout=args.connect_timeout) as conn:
         print("Connected to DB!")
+        started_at = dt.datetime.now(dt.timezone.utc)
+        posts_loaded = None
+        users_loaded = None
+        comments_loaded = None
         if args.posts:
-            load_posts(conn, args.posts, args.limit, args.batch_size)
+            posts_loaded = load_posts(conn, args.posts, args.limit, args.batch_size)
         if args.users:
-            load_users(conn, args.users, args.limit, args.batch_size)
+            users_loaded = load_users(conn, args.users, args.limit, args.batch_size)
         if args.comments:
-            load_comments(conn, args.comments, args.limit, args.batch_size)
+            comments_loaded = load_comments(conn, args.comments, args.limit, args.batch_size)
+        finished_at = dt.datetime.now(dt.timezone.utc)
+        duration_ms = int((finished_at - started_at).total_seconds() * 1000)
+        if any(value is not None for value in (posts_loaded, users_loaded, comments_loaded)):
+            record_load_metrics(
+                conn,
+                started_at,
+                finished_at,
+                duration_ms,
+                posts_loaded,
+                users_loaded,
+                comments_loaded,
+            )
+            print("Metrics stored in DB")
 
 
 if __name__ == "__main__":

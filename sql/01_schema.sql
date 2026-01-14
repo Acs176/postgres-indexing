@@ -1,4 +1,5 @@
 CREATE EXTENSION IF NOT EXISTS vector;
+CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
 
 CREATE TABLE IF NOT EXISTS posts (
     id integer PRIMARY KEY,
@@ -55,4 +56,14 @@ CREATE TABLE IF NOT EXISTS comments (
     user_display_name text,
     user_id integer,
     content_license text
+);
+
+CREATE TABLE IF NOT EXISTS load_metrics (
+    id bigserial PRIMARY KEY,
+    started_at timestamptz NOT NULL,
+    finished_at timestamptz NOT NULL,
+    duration_ms integer NOT NULL,
+    posts_loaded integer,
+    users_loaded integer,
+    comments_loaded integer
 );
