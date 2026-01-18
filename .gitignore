@@ -22,3 +22,6 @@ Thumbs.db
 
 # stack exchange dump
 /meta.stackexchange.com
+
+# query stats
+/monitoring/query_runs
